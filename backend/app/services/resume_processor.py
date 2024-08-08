@@ -5,18 +5,10 @@ from sentence_transformers import SentenceTransformer
 import faiss
 import numpy as np
 from app.core.config import settings
-from sqlalchemy import Column, Integer, String, LargeBinary
-from app.db.database import Base, AsyncSessionLocal
-from sqlalchemy.future import select
+from app.dao.dao import load_embeddings_from_database, store_embeddings_in_database, get_relevant_context
 
 logger = logging.getLogger(__name__)
 
-class Resume(Base):
-    __tablename__ = "resumes"
-
-    id = Column(Integer, primary_key=True, index=True)
-    content = Column(String)
-    embedding = Column(LargeBinary)
 
 class ResumeProcessor:
     def __init__(self):
@@ -24,12 +16,10 @@ class ResumeProcessor:
         self.index = faiss.IndexFlatL2(settings.VECTOR_DIMENSION)
 
     async def load_index(self):
-        async with AsyncSessionLocal() as session:
-            result = await session.execute(select(Resume.embedding))
-            embeddings = result.scalars().all()
-            if embeddings:
-                self.index = faiss.IndexFlatL2(settings.VECTOR_DIMENSION)
-                self.index.add(np.vstack([np.frombuffer(e, dtype=np.float32) for e in embeddings]))
+        embeddings = await load_embeddings_from_database()
+        if embeddings:
+            self.index = faiss.IndexFlatL2(settings.VECTOR_DIMENSION)
+            self.index.add(np.vstack([np.frombuffer(e, dtype=np.float32) for e in embeddings]))
 
     def chunk_text(self, text):
         words = text.split()
@@ -49,12 +39,7 @@ class ResumeProcessor:
             chunks = self.chunk_text(text)
             embeddings = self.model.encode(chunks)
             
-            async with AsyncSessionLocal() as session:
-                for chunk, embedding in zip(chunks, embeddings):
-                    resume = Resume(content=chunk, embedding=embedding.tobytes())
-                    session.add(resume)
-                await session.commit()
-            
+            await store_embeddings_in_database(chunks, embeddings)
             self.index.add(embeddings)
             
             logger.info("Resume processed and added to the index and database")
@@ -67,10 +52,8 @@ class ResumeProcessor:
         query_embedding = self.model.encode([query])
         _, indices = self.index.search(query_embedding, k)
         
-        async with AsyncSessionLocal() as session:
-            result = await session.execute(select(Resume.content).where(Resume.id.in_(indices[0] + 1)))
-            relevant_texts = result.scalars().all()
-        
+        relevant_texts = await get_relevant_context(indices)
+
         return " ".join(relevant_texts)
 
 resume_processor = ResumeProcessor()
