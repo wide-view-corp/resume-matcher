@@ -8,8 +8,8 @@ class Settings(BaseSettings):
     HOST: str
     PORT: int
     VECTOR_DIMENSION: int
-    CHUNK_SIZE: int
-    CHUNK_OVERLAP: int
+    CHUNK_SIZE: int = 200
+    CHUNK_OVERLAP: int = 0
     DATABASE_URL: str
     FAISS_OPTIMIZATION_INTERVAL_HOURS: int = 24
     

@@ -6,6 +6,7 @@ import faiss
 import numpy as np
 from app.core.config import settings
 from app.dao.dao import load_embeddings_from_database, store_embeddings_in_database, get_relevant_context
+from nltk import sent_tokenize
 
 logger = logging.getLogger(__name__)
 
@@ -21,12 +22,27 @@ class ResumeProcessor:
             self.index = faiss.IndexFlatL2(settings.VECTOR_DIMENSION)
             self.index.add(np.vstack([np.frombuffer(e, dtype=np.float32) for e in embeddings]))
 
+    # Function to chunk text into smaller pieces
     def chunk_text(self, text):
-        words = text.split()
+        chunk_size = settings.CHUNK_SIZE
+        sentences = sent_tokenize(text)
         chunks = []
-        for i in range(0, len(words), settings.CHUNK_SIZE - settings.CHUNK_OVERLAP):
-            chunk = ' '.join(words[i:i + settings.CHUNK_SIZE])
-            chunks.append(chunk)
+        current_chunk = []
+        current_length = 0
+
+        for sentence in sentences:
+            sentence_length = len(sentence.split())
+            if current_length + sentence_length <= chunk_size:
+                current_chunk.append(sentence)
+                current_length += sentence_length
+            else:
+                chunks.append(" ".join(current_chunk))
+                current_chunk = [sentence]
+                current_length = sentence_length
+
+        if current_chunk:
+            chunks.append(" ".join(current_chunk))
+
         return chunks
 
     async def process_pdf(self, file_content: bytes):
