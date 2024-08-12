@@ -5,7 +5,7 @@ from sentence_transformers import SentenceTransformer
 import faiss
 import numpy as np
 from app.core.config import settings
-from app.dao.dao import load_embeddings_from_database, store_embeddings_in_database, get_relevant_context
+from app.dao.dao import load_embeddings_from_database, store_resume_in_database, store_chunk_in_database, get_relevant_context
 from nltk import sent_tokenize
 
 logger = logging.getLogger(__name__)
@@ -47,16 +47,24 @@ class ResumeProcessor:
 
     async def process_pdf(self, file_content: bytes):
         try:
+
+            #Text convertor
             pdf_reader = PdfFileReader(io.BytesIO(file_content))
             text = ""
             for page in range(pdf_reader.getNumPages()):
                 text += pdf_reader.getPage(page).extractText()
             
+            #store resume
+            resume_id = await store_resume_in_database(file_content, text)
+
             chunks = self.chunk_text(text)
-            embeddings = self.model.encode(chunks)
             
-            await store_embeddings_in_database(chunks, embeddings)
-            self.index.add(embeddings)
+            for chunk in chunks :
+                embedding = self.model.encode(chunk)
+                self.index.add(embedding)
+                embedding_id = self.index.ntotal - 1
+                await store_chunk_in_database(chunk, embedding_id, resume_id)
+    
             
             logger.info("Resume processed and added to the index and database")
             return True
