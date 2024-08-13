@@ -72,7 +72,7 @@ class ResumeProcessor:
             logger.error(f"Error processing resume: {str(e)}")
             return False
 
-    async def get_relevant_context(self, query: str, k: int = 3):
+    async def get_relevant_context(self, query: str, k: int = 10):
         query_embedding = self.model.encode([query])
         _, indices = self.index.search(query_embedding, k)
         

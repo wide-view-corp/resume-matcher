@@ -4,7 +4,7 @@ from app.api.resume_endpoints import router as resume_router
 from app.api.chat_endpoints import router as chat_router
 from app.core.config import settings
 from app.core.logging import setup_logging
-from app.db.database import init_db
+from app.dao.database import init_db
 from app.services.resume_processor import resume_processor
 
 setup_logging()

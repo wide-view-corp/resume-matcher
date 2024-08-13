@@ -36,15 +36,19 @@ async def store_chunk_in_database(chunk: str, embedding_id: int, resume_id: int)
         await session.commit()
 
 async def get_relevant_context(indices: list[int]) -> list[str]:
-    """Retrieves relevant text chunks from the database based on indices.
+    """Retrieves resumes of relevant chunks based on indices.
 
     Args:
         indices: A list of indices representing relevant resume chunks.
 
     Returns:
-        A list of relevant text chunks.
+        A list of relevant resumes.
     """
     async with AsyncSessionLocal() as session:
-        result = await session.execute(select(Resume.content).where(Resume.id.in_(indices + 1)))
+        result = await session.execute(
+                select(Resume.text)
+                .join(Chunks, Resume.id == Chunks.resume_id)
+                .where(Chunks.embedding_id.in_(indices))
+            )
         relevant_texts = result.scalars().all()
     return relevant_texts
