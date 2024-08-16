@@ -4,6 +4,7 @@ from sqlalchemy.future import select
 from app.models.resume import Resume
 from app.models.chunks import Chunks
 from app.dao.database import AsyncSessionLocal
+import numpy as np
 
 async def load_embeddings_from_database():
     """Loads embeddings from the database.
@@ -12,7 +13,7 @@ async def load_embeddings_from_database():
         A list of embeddings loaded from the database.
     """
     async with AsyncSessionLocal() as session:
-        result = await session.execute(select(Resume.embedding))
+        result = await session.execute(select(Chunks.embedding))
         embeddings = result.scalars().all()
     return embeddings
 
@@ -27,11 +28,11 @@ async def store_resume_in_database(content = bytes, text = str):
         return resume.id
 
 
-async def store_chunk_in_database(chunk: str, embedding_id: int, resume_id: int):
+async def store_chunk_in_database(chunk: str, embedding_id: int, embedding: np.ndarray,resume_id: int):
     """Stores resume's chunk and its embedding_id in the database.
     """
     async with AsyncSessionLocal() as session:
-        chunk = Chunks(content=chunk, embedding_id=embedding_id, resume_id= resume_id)
+        chunk = Chunks(content=chunk, embedding_id=embedding_id, embedding=embedding.tobytes(), resume_id= resume_id)
         session.add(chunk)
         await session.commit()
 

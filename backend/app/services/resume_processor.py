@@ -63,7 +63,7 @@ class ResumeProcessor:
                 embedding = self.model.encode(chunk)
                 self.index.add(embedding)
                 embedding_id = self.index.ntotal - 1
-                await store_chunk_in_database(chunk, embedding_id, resume_id)
+                await store_chunk_in_database(chunk, embedding_id, embedding, resume_id)
     
             
             logger.info("Resume processed and added to the index and database")

@@ -17,7 +17,7 @@ app.include_router(chat_router, prefix="/chat", tags=["chat"])
 
 @app.on_event("startup")
 async def startup_event():
-    asyncio.create_task(start_faiss_optimizer())
+    #asyncio.create_task(start_faiss_optimizer())
     await init_db()
     await resume_processor.load_index()
 

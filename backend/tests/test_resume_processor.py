@@ -6,8 +6,9 @@ def resume_processor():
     return ResumeProcessor()
 
 def test_process_pdf(resume_processor):
-    # This is a mock test. In a real scenario, you'd use a sample PDF file.
-    mock_pdf_content = b"%PDF-1.3\n%\xe2\xe3\xcf\xd3\n..."
+    # Read the content of the cv_test.pdf file
+    with open("cv_test.pdf", "rb") as file:
+        mock_pdf_content = file.read()
     result = resume_processor.process_pdf(mock_pdf_content)
     assert result == True
 
