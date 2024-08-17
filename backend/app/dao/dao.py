@@ -14,7 +14,7 @@ async def load_embeddings_from_database():
     """
     async with AsyncSessionLocal() as session:
         result = await session.execute(select(Chunks.embedding))
-        embeddings = result.scalars().all()
+        embeddings = result.all()
     return embeddings
 
 async def store_resume_in_database(content = bytes, text = str):
@@ -40,16 +40,22 @@ async def get_relevant_context(indices: list[int]) -> list[str]:
     """Retrieves resumes of relevant chunks based on indices.
 
     Args:
-        indices: A list of indices representing relevant resume chunks.
+        indices: A list of indices representing relevant resumes.
 
     Returns:
         A list of relevant resumes.
     """
     async with AsyncSessionLocal() as session:
         result = await session.execute(
-                select(Resume.text)
-                .join(Chunks, Resume.id == Chunks.resume_id)
-                .where(Chunks.embedding_id.in_(indices))
-            )
-        relevant_texts = result.scalars().all()
+            select(Resume.id, Resume.text)
+            .join(Chunks, Resume.id == Chunks.resume_id)
+            .where(Chunks.embedding_id.in_(indices))
+            .distinct(Resume.id)  # Ensure unique resume entries
+        )
+        # Fetch all results and process them
+        resumes = result.all()
+        
+    # Combine the results into the desired format: id followed by text, separated by "\n"
+    relevant_texts = "\n\n".join(f"{resume.id}\n{resume.text}" for resume in resumes)
+
     return relevant_texts

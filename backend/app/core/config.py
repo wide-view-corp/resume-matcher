@@ -7,9 +7,9 @@ class Settings(BaseSettings):
     MAX_LENGTH: int
     HOST: str
     PORT: int
-    VECTOR_DIMENSION: int = 384
-    CHUNK_SIZE: int = 200
-    CHUNK_OVERLAP: int = 0
+    VECTOR_DIMENSION: int
+    CHUNK_SIZE: int
+    CHUNK_OVERLAP: int
     DATABASE_URL: str
     FAISS_OPTIMIZATION_INTERVAL_HOURS: int = 24
     

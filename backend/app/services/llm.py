@@ -22,7 +22,12 @@ class LLM:
         try:
             if use_rag:
                 context = await resume_processor.get_relevant_context(prompt)
-                prompt = f"Context: {context}\n\nQuestion: {prompt}\n\nAnswer:"
+                prompt = f"Consider the following resumes with their IDs as context:\n\n{context}\n\n You are a recruitment assistant. 
+                Your task is to analyze these resumes and compare them with the given job description. 
+                Based on this analysis, suggest the resumes that best match the job description and provide a clear explanation for your choices. 
+                If multiple resumes are equally suitable, mention this. 
+                If the resumes are unclear or you cannot determine a match, state that you do not know without making up an answer.
+                \n\nQuestion: {prompt}\n\nAnswer:"
 
             inputs = self.tokenizer(prompt, return_tensors="pt").to(self.device)
             
@@ -41,19 +46,5 @@ class LLM:
         except Exception as e:
             logger.error(f"Error generating response: {str(e)}")
             raise
-
-
-    def get_resume_data(self, index: int) -> Dict[str, any]:
-            # This method should retrieve the resume data associated with the given index
-            # You'll need to implement this based on how you're storing resume data
-            # For example, you might have a database or a dictionary mapping indices to resume data
-            # For now, we'll return a dummy response
-            return {
-                "id": index,
-                "name": f"Candidate {index}",
-                "summary": f"This is a summary of candidate {index}'s resume.",
-                "skills": ["Python", "FastAPI", "FAISS"],
-                "experience": ["Software Engineer at Tech Co", "Data Scientist at AI Inc"]
-            }
     
 llm = LLM()
