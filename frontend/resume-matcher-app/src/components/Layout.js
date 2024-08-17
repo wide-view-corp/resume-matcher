@@ -1,36 +1,60 @@
 import React from 'react';
-import { Box, Flex, VStack } from '@chakra-ui/react';
+import { Box, Flex, IconButton, VStack, Text, useDisclosure, Divider } from '@chakra-ui/react';
 import { Link as RouterLink, useLocation } from 'react-router-dom';
+import { FaHome, FaFileUpload, FaRobot, FaBars } from 'react-icons/fa';
+import UserProfile from './UserProfile';
 
-const NavItem = ({ to, children }) => {
+const NavItem = ({ to, icon, children, isCollapsed }) => {
   const location = useLocation();
   const isActive = location.pathname === to;
 
   return (
-    <Box
+    <Flex
       as={RouterLink}
       to={to}
-      p={2}
+      p={3}
       borderRadius="md"
-      bg={isActive ? 'brand.500' : 'transparent'}
-      color={isActive ? 'white' : 'gray.700'}
-      _hover={{ bg: isActive ? 'brand.600' : 'gray.100' }}
+      bg={isActive ? 'whiteAlpha.300' : 'transparent'}
+      color="white"
+      _hover={{ bg: 'whiteAlpha.400' }}
       fontWeight="medium"
-      transition="background-color 0.2s, color 0.2s"
+      alignItems="center"
+      justifyContent={isCollapsed ? 'center' : 'flex-start'}
     >
-      {children}
-    </Box>
+      <Box as={icon} fontSize="20px" />
+      {!isCollapsed && <Text ml={4}>{children}</Text>}
+    </Flex>
   );
 };
 
 const Layout = ({ children }) => {
+  const { isOpen, onToggle } = useDisclosure({ defaultIsOpen: true });
+
   return (
-    <Flex minHeight="100vh" bg="gray.50">
-      <Box width="240px" bg="white" boxShadow="lg" p={4}>
-        <VStack spacing={4} align="stretch">
-          <NavItem to="/dashboard">Dashboard</NavItem>
-          <NavItem to="/upload">Resume Upload</NavItem>
-          <NavItem to="/chatbot">Chatbot</NavItem>
+    <Flex minHeight="100vh">
+      <Box
+        width={isOpen ? '250px' : '70px'}
+        bg="rgba(0,0,0,0.7)"
+        backdropFilter="blur(10px)"
+        transition="width 0.3s"
+        display="flex"
+        flexDirection="column"
+      >
+        <Flex p={4} justifyContent="space-between" alignItems="center" mb={2}>
+          <UserProfile isCollapsed={!isOpen} />
+          <IconButton
+            icon={<FaBars />}
+            onClick={onToggle}
+            variant="outline"
+            colorScheme="whiteAlpha"
+            size="sm"
+          />
+        </Flex>
+        <Divider borderColor="whiteAlpha.400" />
+        <VStack spacing={6} align="stretch" mt={4} px={4}>
+          <NavItem to="/dashboard" icon={FaHome} isCollapsed={!isOpen}>Dashboard</NavItem>
+          <NavItem to="/upload" icon={FaFileUpload} isCollapsed={!isOpen}>Resume Upload</NavItem>
+          <NavItem to="/chatbot" icon={FaRobot} isCollapsed={!isOpen}>Chatbot</NavItem>
         </VStack>
       </Box>
       <Box flex={1} p={8}>
