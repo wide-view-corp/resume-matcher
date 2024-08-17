@@ -5,7 +5,7 @@ import { FaChartLine, FaCalendarAlt } from 'react-icons/fa';
 const Dashboard = () => {
   return (
     <Box>
-      <Heading mb={6} color="white">Welcome to Your Dashboard</Heading>
+      <Heading mb={6} color="white" textAlign="center">Welcome to Your Dashboard</Heading>
       <SimpleGrid columns={2} spacing={6}>
         <Box p={6} borderRadius="lg" boxShadow="md" bg="white" backdropFilter="blur(10px)" backgroundColor="rgba(255,255,255,0.8)">
           <Heading size="md" mb={4} display="flex" alignItems="center">

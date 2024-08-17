@@ -1,6 +1,6 @@
 import React from 'react';
-import { Box, Flex, Text, Avatar, Menu, MenuButton, MenuList, MenuItem } from '@chakra-ui/react';
-import { FaChevronDown } from 'react-icons/fa';
+import { Box, Flex, Text, Avatar, Menu, MenuButton, MenuList, MenuItem, IconButton } from '@chakra-ui/react';
+import { FaChevronDown, FaSignOutAlt } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 
 const UserProfile = ({ isCollapsed }) => {
@@ -9,26 +9,48 @@ const UserProfile = ({ isCollapsed }) => {
 
   const handleLogout = () => {
     // Implement logout logic here
-    // For now, we'll just redirect to the login page
     navigate('/login');
   };
+
+  if (isCollapsed) {
+    return (
+      <Menu>
+        <MenuButton
+          as={IconButton}
+          icon={<Avatar size="sm" name={userName} />}
+          variant="ghost"
+        />
+        <MenuList>
+          <MenuItem onClick={handleLogout} icon={<FaSignOutAlt />}>
+            Logout
+          </MenuItem>
+        </MenuList>
+      </Menu>
+    );
+  }
 
   return (
     <Box>
       <Menu>
-        <MenuButton>
-          <Flex alignItems="center" color="white">
-            <Avatar size="sm" name={userName} mr={isCollapsed ? 0 : 2} />
-            {!isCollapsed && (
-              <>
-                <Text mr={2}>{userName}</Text>
-                <FaChevronDown size="12px" />
-              </>
-            )}
+        <MenuButton
+          py={2}
+          transition="all 0.3s"
+          _focus={{ boxShadow: 'none' }}
+        >
+          <Flex align="center">
+            <Avatar size="sm" name={userName} mr="2" />
+            <Text fontSize="sm" fontWeight="medium">
+              {userName}
+            </Text>
+            <Box ml="2" display="inline-block">
+              <FaChevronDown />
+            </Box>
           </Flex>
         </MenuButton>
         <MenuList>
-          <MenuItem onClick={handleLogout}>Logout</MenuItem>
+          <MenuItem onClick={handleLogout} icon={<FaSignOutAlt />}>
+            Logout
+          </MenuItem>
         </MenuList>
       </Menu>
     </Box>
