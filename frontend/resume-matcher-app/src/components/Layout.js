@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Flex, Link as ChakraLink, VStack } from '@chakra-ui/react';
+import { Box, Flex, VStack } from '@chakra-ui/react';
 import { Link as RouterLink, useLocation } from 'react-router-dom';
 
 const NavItem = ({ to, children }) => {
@@ -7,25 +7,26 @@ const NavItem = ({ to, children }) => {
   const isActive = location.pathname === to;
 
   return (
-    <ChakraLink
+    <Box
       as={RouterLink}
       to={to}
       p={2}
       borderRadius="md"
-      bg={isActive ? 'blue.500' : 'transparent'}
+      bg={isActive ? 'brand.500' : 'transparent'}
       color={isActive ? 'white' : 'gray.700'}
-      _hover={{ bg: isActive ? 'blue.600' : 'blue.100' }}
+      _hover={{ bg: isActive ? 'brand.600' : 'gray.100' }}
       fontWeight="medium"
+      transition="background-color 0.2s, color 0.2s"
     >
       {children}
-    </ChakraLink>
+    </Box>
   );
 };
 
 const Layout = ({ children }) => {
   return (
-    <Flex minHeight="100vh">
-      <Box width="200px" bg="gray.100" p={4}>
+    <Flex minHeight="100vh" bg="gray.50">
+      <Box width="240px" bg="white" boxShadow="lg" p={4}>
         <VStack spacing={4} align="stretch">
           <NavItem to="/dashboard">Dashboard</NavItem>
           <NavItem to="/upload">Resume Upload</NavItem>
