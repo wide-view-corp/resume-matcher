@@ -5,6 +5,7 @@ class Settings(BaseSettings):
     DEBUG: bool
     MODEL_NAME: str
     MAX_LENGTH: int
+    CONTEXT_LENGTH: int = 2000 
     HOST: str
     PORT: int
     VECTOR_DIMENSION: int

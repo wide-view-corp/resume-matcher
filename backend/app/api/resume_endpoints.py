@@ -16,3 +16,5 @@ async def upload_resume(file: UploadFile = File(...)):
         return {"message": "Resume processed successfully"}
     else:
         raise HTTPException(status_code=500, detail="Failed to process the resume")
+    
+# Delete resume function to be added

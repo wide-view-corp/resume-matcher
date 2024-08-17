@@ -9,7 +9,7 @@ router = APIRouter()
 
 class PromptRequest(BaseModel):
     prompt: str
-    max_length: int = 100
+    max_length: int = 200
     use_rag: bool = False
 
 class LLMResponse(BaseModel):
