@@ -1,0 +1,95 @@
+# Node.js (Backend)
+node_modules/
+npm-debug.log
+yarn-error.log
+.env
+*.log
+logs/
+*.pid
+*.seed
+*.pid.lock
+
+# React (Frontend)
+build/
+dist/
+.cache/
+coverage/
+
+# IDEs and editors
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+.temp/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Dependency directories
+jspm_packages/
+bower_components/
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# dotenv environment variables file
+.env
+
+# Production build files
+/build
+
+# Misc
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Backend specific
+/uploads
+/dist
+
+# Frontend specific
+/public/uploads
+
+# Testing
+/coverage
+
+# Production
+/build
+/node_modules
+/uploads
+
+# Dependency lock files (uncomment if you want to ignore them)
+# package-lock.json
+# yarn.lock
+
+# Debug logs
+debug.log*
