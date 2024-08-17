@@ -1,0 +1,50 @@
+# Dependency directories
+node_modules
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+
+# Build output
+build
+dist
+
+# Version control
+.git
+.gitignore
+
+# Development and editor files
+.vscode
+.idea
+*.swp
+*.swo
+
+# Operating system files
+.DS_Store
+Thumbs.db
+
+# Testing
+coverage
+
+# Environment files
+# .env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+logs
+*.log
+
+# Temporary files
+tmp
+temp
+
+# Docker
+Dockerfile
+.dockerignore
+
+# Miscellaneous
+README.md
+LICENSE
+*.md
