@@ -1,15 +1,33 @@
 import React, { useState } from 'react';
-import { Box, Button, Input, VStack, Heading, useToast } from '@chakra-ui/react';
-import { FaUser, FaLock } from 'react-icons/fa';
+import {
+  Box,
+  Button,
+  FormControl,
+  FormLabel,
+  Input,
+  VStack,
+  Heading,
+  useToast,
+  useColorModeValue
+} from '@chakra-ui/react';
+import { useNavigate } from 'react-router-dom';
+import authService from '../services/authService';
 
 const Login = ({ setIsLoggedIn }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const toast = useToast();
+  const navigate = useNavigate();
 
-  const handleLogin = (e) => {
+  const bgColor = useColorModeValue("white", "gray.800");
+  const textColor = useColorModeValue("gray.800", "white");
+
+  const handleLogin = async (e) => {
     e.preventDefault();
-    if (email && password) {
+    setIsLoading(true);
+    try {
+      const userData = await authService.login(email, password);
       setIsLoggedIn(true);
       toast({
         title: 'Login successful',
@@ -17,28 +35,47 @@ const Login = ({ setIsLoggedIn }) => {
         duration: 3000,
         isClosable: true,
       });
+      navigate('/dashboard');
+    } catch (error) {
+      toast({
+        title: 'Login failed',
+        description: error.message || 'An error occurred during login',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <Box height="100vh" display="flex" alignItems="center" justifyContent="center">
-      <Box width="400px" p={8} borderRadius="lg" boxShadow="xl" bg="white" backdropFilter="blur(10px)" backgroundColor="rgba(255,255,255,0.8)">
+    <Box minHeight="100vh" display="flex" alignItems="center" justifyContent="center">
+      <Box width="400px" p={8} borderRadius="lg" boxShadow="xl" bg={bgColor}>
         <VStack spacing={4}>
-          <Heading size="lg">Login</Heading>
-          <Input
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            leftElement={<Box as={FaUser} color="gray.500" ml={2} />}
-          />
-          <Input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            leftElement={<Box as={FaLock} color="gray.500" ml={2} />}
-          />
-          <Button onClick={handleLogin} colorScheme="blue" width="full">
+          <Heading size="lg" color={textColor}>Login</Heading>
+          <FormControl>
+            <FormLabel>Email</FormLabel>
+            <Input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </FormControl>
+          <FormControl>
+            <FormLabel>Password</FormLabel>
+            <Input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </FormControl>
+          <Button
+            onClick={handleLogin}
+            colorScheme="blue"
+            width="full"
+            isLoading={isLoading}
+          >
             Log In
           </Button>
         </VStack>

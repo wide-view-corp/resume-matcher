@@ -1,122 +1,189 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Box, Input, Button, VStack, Text, Heading, Flex, Icon, ScaleFade } from '@chakra-ui/react';
-import { FaPaperPlane, FaRobot, FaUser } from 'react-icons/fa';
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  Box,
+  VStack,
+  HStack,
+  Text,
+  Input,
+  Button,
+  useColorModeValue,
+  Flex,
+  Spinner,
+  useToast,
+  Icon
+} from '@chakra-ui/react';
+import { FaPaperPlane } from 'react-icons/fa';
+import { RiRobotFill } from 'react-icons/ri';  // Import a robot icon
+import chatbotService from '../services/chatbotService';
+
+// Custom Chatbot Icon
+const ChatbotIcon = (props) => (
+  <Icon as={RiRobotFill} boxSize="30px" color="blue.500" {...props} />
+);
+
+const Message = ({ message, isUser }) => {
+  const bgColor = useColorModeValue(
+    isUser ? 'blue.100' : 'rgba(255, 255, 255, 0.5)',
+    isUser ? 'blue.700' : 'rgba(45, 55, 72, 0.6)'  // Dimmed in dark mode
+  );
+  const textColor = useColorModeValue(
+    isUser ? 'blue.800' : 'gray.800',
+    isUser ? 'blue.100' : 'gray.100'
+  );
+  const boxShadow = useColorModeValue(
+    '0 2px 4px rgba(0, 0, 0, 0.1)',
+    'none'
+  );
+
+  return (
+    <Flex justify={isUser ? 'flex-end' : 'flex-start'} mb={4} opacity={0.9}>
+      {!isUser && <ChatbotIcon mr={2} />}
+      <Box
+        maxW="70%"
+        bg={bgColor}
+        color={textColor}
+        p={3}
+        borderRadius="lg"
+        fontSize="sm"
+        boxShadow={boxShadow}
+        backdropFilter={isUser ? 'none' : 'blur(5px)'}
+        border={isUser ? 'none' : '1px solid rgba(255, 255, 255, 0.2)'}
+      >
+        <Text>{message.content}</Text>
+      </Box>
+      {isUser && <Icon as={FaPaperPlane} boxSize="20px" ml={2} color="blue.500" />}
+    </Flex>
+  );
+};
 
 const Chatbot = () => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
-  const messagesEndRef = useRef(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const endOfMessagesRef = useRef(null);
+  const toast = useToast();
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+  const bgColor = useColorModeValue('rgba(255, 255, 255, 0.8)', 'rgba(26, 32, 44, 0.8)');
+  const borderColor = useColorModeValue('rgba(255, 255, 255, 0.3)', 'rgba(255, 255, 255, 0.1)');
 
-  useEffect(scrollToBottom, [messages]);
+  useEffect(() => {
+    fetchConversationHistory();
+  }, []);
 
-  const handleSend = () => {
-    if (input.trim()) {
-      setMessages([...messages, { text: input, sender: 'user' }]);
-      setTimeout(() => {
-        setMessages((prevMessages) => [
-          ...prevMessages,
-          { text: 'This is a sample response from the chatbot.', sender: 'bot' },
-        ]);
-      }, 1000);
-      setInput('');
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  const fetchConversationHistory = async () => {
+    try {
+      const history = await chatbotService.getConversationHistory();
+      setMessages(history);
+    } catch (error) {
+      toast({
+        title: 'Error fetching conversation history',
+        description: error.message,
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
     }
   };
 
+  const handleSendMessage = async () => {
+    if (!input.trim()) return;
+
+    const userMessage = { content: input, isUser: true };
+    setMessages(prev => [...prev, userMessage]);
+    setInput('');
+    setIsLoading(true);
+
+    try {
+      const response = await chatbotService.sendMessage(input);
+      const botMessage = { content: response.message, isUser: false };
+      setMessages(prev => [...prev, botMessage]);
+    } catch (error) {
+      toast({
+        title: 'Error sending message',
+        description: error.message,
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const scrollToBottom = () => {
+    endOfMessagesRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   return (
-    <Box>
-      <Heading mb={6} color="white" textAlign="center">Chatbot</Heading>
+    <Box height="calc(100vh - 100px)" display="flex" flexDirection="column">
+      <Flex align="center" mb={4}>
+        <ChatbotIcon mr={2} />
+        <Text fontSize="2xl" fontWeight="bold">AI Assistant</Text>
+      </Flex>
       <Box
-        p={6}
-        borderRadius="2xl"
+        flex={1}
+        p={4}
+        borderWidth={1}
+        borderRadius="lg"
+        borderColor={borderColor}
+        bg={bgColor}
+        overflowY="auto"
+        mb={4}
         boxShadow="xl"
-        bg="rgba(255, 255, 255, 0.1)"
         backdropFilter="blur(10px)"
-        border="1px solid rgba(255, 255, 255, 0.18)"
+        css={{
+          '&::-webkit-scrollbar': {
+            width: '4px',
+          },
+          '&::-webkit-scrollbar-track': {
+            width: '6px',
+          },
+          '&::-webkit-scrollbar-thumb': {
+            background: useColorModeValue('blue.300', 'gray.500'),
+            borderRadius: '24px',
+          },
+        }}
       >
-        <VStack spacing={4} align="stretch" height="500px">
-          <Box
-            flex={1}
-            overflowY="auto"
-            borderRadius="xl"
-            bg="rgba(255, 255, 255, 0.05)"
-            p={4}
-            css={{
-              '&::-webkit-scrollbar': {
-                width: '4px',
-              },
-              '&::-webkit-scrollbar-track': {
-                width: '6px',
-              },
-              '&::-webkit-scrollbar-thumb': {
-                background: 'rgba(255, 255, 255, 0.2)',
-                borderRadius: '24px',
-              },
-            }}
-          >
-            {messages.map((message, index) => (
-              <ScaleFade initialScale={0.9} in={true} key={index}>
-                <Flex
-                  justifyContent={message.sender === 'user' ? 'flex-end' : 'flex-start'}
-                  mb={4}
-                >
-                  <Box
-                    maxWidth="70%"
-                    p={3}
-                    borderRadius="lg"
-                    bg={message.sender === 'user' ? 'blue.500' : 'green.500'}
-                    color="white"
-                    boxShadow="md"
-                  >
-                    <Flex alignItems="center">
-                      {message.sender === 'user' ? (
-                        <>
-                          <Text mr={2}>{message.text}</Text>
-                          <Icon as={FaUser} />
-                        </>
-                      ) : (
-                        <>
-                          <Icon as={FaRobot} mr={2} />
-                          <Text>{message.text}</Text>
-                        </>
-                      )}
-                    </Flex>
-                  </Box>
-                </Flex>
-              </ScaleFade>
-            ))}
-            <div ref={messagesEndRef} />
-          </Box>
-          <Flex>
-            <Input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Type your message..."
-              mr={2}
-              bg="rgba(255, 255, 255, 0.1)"
-              border="1px solid rgba(255, 255, 255, 0.18)"
-              _placeholder={{ color: "gray.300" }}
-              color="white"
-              _focus={{
-                boxShadow: "0 0 0 1px rgba(255, 255, 255, 0.4)",
-                borderColor: "rgba(255, 255, 255, 0.4)"
-              }}
-            />
-            <Button
-              onClick={handleSend}
-              colorScheme="blue"
-              leftIcon={<Icon as={FaPaperPlane} />}
-              bg="rgba(66, 153, 225, 0.6)"
-              _hover={{ bg: "rgba(66, 153, 225, 0.8)" }}
-            >
-              Send
-            </Button>
-          </Flex>
+        <VStack spacing={4} align="stretch">
+          {messages.map((message, index) => (
+            <Message key={index} message={message} isUser={message.isUser} />
+          ))}
+          {isLoading && (
+            <Flex justify="flex-start" mb={4}>
+              <Spinner size="sm" mr={2} color="blue.500" />
+              <Text fontSize="sm">AI is thinking...</Text>
+            </Flex>
+          )}
+          <div ref={endOfMessagesRef} />
         </VStack>
       </Box>
+      <HStack as="form" onSubmit={(e) => { e.preventDefault(); handleSendMessage(); }}>
+        <Input
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="Type your message here..."
+          size="md"
+          bg={useColorModeValue('white', 'gray.700')}
+          borderColor={useColorModeValue('gray.300', 'gray.600')}
+          _focus={{
+            borderColor: 'blue.500',
+            boxShadow: '0 0 0 1px blue.500',
+          }}
+        />
+        <Button
+          colorScheme="blue"
+          onClick={handleSendMessage}
+          isLoading={isLoading}
+          loadingText="Sending"
+          leftIcon={<FaPaperPlane />}
+        >
+          Send
+        </Button>
+      </HStack>
     </Box>
   );
 };

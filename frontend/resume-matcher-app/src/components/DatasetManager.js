@@ -1,12 +1,13 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Box, Button, VStack, Heading, Text, useToast, List, ListItem, IconButton,
   Flex, Progress, useColorModeValue, Modal, ModalOverlay, ModalContent,
   ModalHeader, ModalFooter, ModalBody, ModalCloseButton, useDisclosure,
-  Grid, GridItem, Icon, Divider
+  Grid, GridItem, Icon, Divider, Image, Tooltip
 } from '@chakra-ui/react';
 import { FaFileUpload, FaTrash, FaEye, FaListUl, FaTh } from 'react-icons/fa';
-import FileIcon from './FileIcon';  // Make sure this path is correct
+import FileIcon from './FileIcon';
+import datasetService from '../services/datasetService';
 
 const ListView = ({ documents, handlePreview, handleDelete, borderColor, hoverBg }) => (
   <List spacing={3}>
@@ -41,37 +42,60 @@ const ListView = ({ documents, handlePreview, handleDelete, borderColor, hoverBg
   </List>
 );
 
-const GridView = ({ documents, handlePreview, handleDelete, borderColor, hoverBg }) => (
-  <Grid templateColumns="repeat(auto-fill, minmax(120px, 1fr))" gap={6}>
-    {documents.map((doc) => (
-      <GridItem key={doc.id} w="100%" textAlign="center">
-        <VStack spacing={2} p={3} borderWidth={1} borderRadius="md" borderColor={borderColor} _hover={{ bg: hoverBg }}>
-          <FileIcon type={doc.type} size="3em" />
-          <Text fontSize="sm" fontWeight="medium" noOfLines={2}>{doc.name}</Text>
-          <Flex mt={2}>
-            <IconButton
-              icon={<FaEye />}
-              onClick={() => handlePreview(doc)}
-              aria-label="Preview"
-              size="sm"
-              mr={1}
-              variant="ghost"
-            />
-            <IconButton
-              icon={<FaTrash />}
-              onClick={() => handleDelete(doc.id)}
-              aria-label="Delete"
-              size="sm"
-              colorScheme="red"
-              variant="ghost"
-            />
-          </Flex>
-        </VStack>
-      </GridItem>
-    ))}
-  </Grid>
-);
 
+const GridView = ({ documents, handlePreview, handleDelete, borderColor, hoverBg }) => (
+    <Grid templateColumns="repeat(auto-fill, minmax(120px, 1fr))" gap={4}>
+      {documents.map((doc) => (
+        <GridItem key={doc.id} w="100%" textAlign="center">
+          <VStack
+            spacing={2}
+            p={3}
+            borderWidth={1}
+            borderRadius="md"
+            borderColor={borderColor}
+            _hover={{ bg: hoverBg }}
+            height="100%"
+            justifyContent="space-between"
+          >
+            <FileIcon type={doc.type} size="3em" />
+            <Tooltip label={doc.name} aria-label="Document name">
+              <Box width="100%" overflow="hidden">
+                <Text
+                  fontSize="sm"
+                  fontWeight="medium"
+                  noOfLines={2}
+                  textOverflow="ellipsis"
+                  overflow="hidden"
+                  wordBreak="break-word"
+                >
+                  {doc.name}
+                </Text>
+              </Box>
+            </Tooltip>
+            <Flex mt={2} justifyContent="center" width="100%">
+              <IconButton
+                icon={<FaEye />}
+                onClick={() => handlePreview(doc)}
+                aria-label="Preview"
+                size="sm"
+                mr={1}
+                variant="ghost"
+              />
+              <IconButton
+                icon={<FaTrash />}
+                onClick={() => handleDelete(doc.id)}
+                aria-label="Delete"
+                size="sm"
+                colorScheme="red"
+                variant="ghost"
+              />
+            </Flex>
+          </VStack>
+        </GridItem>
+      ))}
+    </Grid>
+  );
+  
 const DatasetManager = () => {
   const [documents, setDocuments] = useState([]);
   const [uploading, setUploading] = useState(false);
@@ -89,63 +113,123 @@ const DatasetManager = () => {
   const subTextColor = useColorModeValue("gray.600", "gray.400");
   const uploadIconColor = useColorModeValue("blue.500", "blue.300");
 
+  useEffect(() => {
+    fetchDocuments();
+  }, []);
+
+  const fetchDocuments = async () => {
+    try {
+      const fetchedDocuments = await datasetService.getDocuments();
+      setDocuments(fetchedDocuments);
+    } catch (error) {
+      toast({
+        title: 'Error fetching documents',
+        description: error.message,
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+    }
+  };
+
   const handleFileChange = async (e) => {
     const files = Array.from(e.target.files);
     setUploading(true);
     setUploadProgress(0);
 
-    const newDocuments = [];
+    try {
+      const uploadedDocuments = await Promise.all(
+        files.map(async (file) => {
+          const formData = new FormData();
+          formData.append('file', file);
+          const result = await datasetService.uploadDocument(formData);
+          setUploadProgress((prev) => prev + (100 / files.length));
+          return result;
+        })
+      );
 
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      const document = await readFile(file);
-      newDocuments.push(document);
-      setUploadProgress(((i + 1) / files.length) * 100);
+      setDocuments(prev => [...prev, ...uploadedDocuments]);
+      toast({
+        title: `${files.length} document${files.length > 1 ? 's' : ''} uploaded successfully`,
+        status: 'success',
+        duration: 3000,
+        isClosable: true,
+      });
+    } catch (error) {
+      toast({
+        title: 'Error uploading documents',
+        description: error.response ? error.response.data.error : error.message,
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+    } finally {
+      setUploading(false);
+      setUploadProgress(0);
     }
-
-    setDocuments(prev => [...prev, ...newDocuments]);
-    setUploading(false);
-    
-    toast({
-      title: `${files.length} document${files.length > 1 ? 's' : ''} uploaded successfully`,
-      status: 'success',
-      duration: 3000,
-      isClosable: true,
-    });
+  };
+  const handleDelete = async (id) => {
+    try {
+      await datasetService.deleteDocument(id);
+      setDocuments(documents.filter(doc => doc.id !== id));
+      toast({
+        title: 'Document deleted',
+        status: 'info',
+        duration: 3000,
+        isClosable: true,
+      });
+    } catch (error) {
+      toast({
+        title: 'Error deleting document',
+        description: error.message,
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+    }
   };
 
-  const readFile = (file) => {
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        resolve({
-          id: Date.now() + Math.random(),
-          name: file.name,
-          content: e.target.result,
-          type: file.type
-        });
-      };
-      if (file.type === 'application/pdf') {
-        reader.readAsDataURL(file);
-      } else {
-        reader.readAsText(file);
-      }
-    });
+  const handlePreview = async (doc) => {
+    try {
+      const content = await datasetService.getDocumentContent(doc.id);
+      setPreviewContent({ ...doc, content });
+      onOpen();
+    } catch (error) {
+      toast({
+        title: 'Error fetching document content',
+        description: error.message,
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+    }
   };
 
-  const handleDelete = (id) => {
-    setDocuments(documents.filter(doc => doc.id !== id));
-    toast({
-      title: 'Document deleted',
-      status: 'info',
-      duration: 3000,
-      isClosable: true,
-    });
-  };
-
-  const handlePreview = (doc) => {
-    setPreviewContent(doc);
-    onOpen();
+  const renderPreviewContent = () => {
+    switch (previewContent.type) {
+      case 'application/pdf':
+        return (
+          <iframe
+            src={previewContent.content}
+            width="100%"
+            height="500px"
+            title="PDF Preview"
+          />
+        );
+      case 'image/jpeg':
+      case 'image/png':
+      case 'image/gif':
+        return (
+          <Image
+            src={previewContent.content}
+            alt={previewContent.name}
+            maxWidth="100%"
+            maxHeight="500px"
+          />
+        );
+      default:
+        return <Text whiteSpace="pre-wrap">{previewContent.content}</Text>;
+    }
   };
 
   return (
@@ -153,12 +237,10 @@ const DatasetManager = () => {
       <Heading mb={6} color={textColor}>Dataset Manager</Heading>
       <Box p={6} borderRadius="lg" boxShadow="xl" bg={bgColor}>
         <VStack spacing={6} align="stretch">
-          {/* Upload Section */}
           <Box p={5} borderWidth={2} borderRadius="md" borderStyle="dashed" borderColor={borderColor} textAlign="center">
             <input
               type="file"
               multiple
-              accept=".txt,.pdf,.doc,.docx"
               onChange={handleFileChange}
               ref={fileInputRef}
               style={{ display: 'none' }}
@@ -185,7 +267,6 @@ const DatasetManager = () => {
           
           <Divider />
           
-          {/* Document List Section */}
           <Flex justify="space-between" align="center">
             <Heading size="md">Your Documents</Heading>
             <Flex align="center">
@@ -225,16 +306,7 @@ const DatasetManager = () => {
           <ModalCloseButton />
           <ModalBody>
             <Box maxHeight="60vh" overflowY="auto">
-              {previewContent.type === 'application/pdf' ? (
-                <iframe
-                  src={previewContent.content}
-                  width="100%"
-                  height="500px"
-                  title="PDF Preview"
-                />
-              ) : (
-                <Text whiteSpace="pre-wrap">{previewContent.content}</Text>
-              )}
+              {renderPreviewContent()}
             </Box>
           </ModalBody>
           <ModalFooter>
