@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Background -->
+  <rect width="32" height="32" fill="#4299E1" rx="6" ry="6"/>
+  
+  <!-- Simplified database icon -->
+  <path d="M8 10 Q16 6 24 10 Q16 14 8 10 Z" fill="white" />
+  <path d="M8 16 Q16 12 24 16 Q16 20 8 16 Z" fill="white" />
+  
+  <!-- Simplified chat bubble -->
+  <path d="M24 18 Q28 18 28 22 L28 26 L26 24 L24 24 Q20 24 20 20 L20 18 Z" fill="white" />
+</svg>
