@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import { ChakraProvider, extendTheme, Box, useColorMode, useColorModeValue, IconButton } from '@chakra-ui/react';
 import { FaMoon, FaSun } from 'react-icons/fa';
@@ -7,6 +7,7 @@ import Dashboard from './components/Dashboard';
 import DatasetManager from './components/DatasetManager';
 import Chatbot from './components/Chatbot';
 import Layout from './components/Layout';
+import authService from './services/authService';
 
 const theme = extendTheme({
   config: {
@@ -115,8 +116,18 @@ const AnimatedBackground = () => {
   );
 };
 
+
 const App = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const currentUser = authService.getCurrentUser();
+    if (currentUser) {
+      setIsLoggedIn(true);
+      setUser(currentUser);
+    }
+  }, []);
 
   return (
     <ChakraProvider theme={theme}>
@@ -126,16 +137,16 @@ const App = () => {
           <ColorModeToggle />
           <Routes>
             <Route path="/login" element={
-              isLoggedIn ? <Navigate to="/dashboard" /> : <Login setIsLoggedIn={setIsLoggedIn} />
+              isLoggedIn ? <Navigate to="/dashboard" /> : <Login setIsLoggedIn={setIsLoggedIn} setUser={setUser} />
             } />
             <Route path="/dashboard" element={
-              isLoggedIn ? <Layout><Dashboard /></Layout> : <Navigate to="/login" />
+              isLoggedIn ? <Layout user={user} setIsLoggedIn={setIsLoggedIn} setUser={setUser}><Dashboard user={user} /></Layout> : <Navigate to="/login" />
             } />
             <Route path="/dataset" element={
-              isLoggedIn ? <Layout><DatasetManager /></Layout> : <Navigate to="/login" />
+              isLoggedIn ? <Layout user={user} setIsLoggedIn={setIsLoggedIn} setUser={setUser}><DatasetManager /></Layout> : <Navigate to="/login" />
             } />
             <Route path="/chatbot" element={
-              isLoggedIn ? <Layout><Chatbot /></Layout> : <Navigate to="/login" />
+              isLoggedIn ? <Layout user={user} setIsLoggedIn={setIsLoggedIn} setUser={setUser}><Chatbot /></Layout> : <Navigate to="/login" />
             } />
             <Route path="*" element={<Navigate to="/login" />} />
           </Routes>

@@ -13,7 +13,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import authService from '../services/authService';
 
-const Login = ({ setIsLoggedIn }) => {
+const Login = ({ setIsLoggedIn, setUser }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -28,9 +28,11 @@ const Login = ({ setIsLoggedIn }) => {
     setIsLoading(true);
     try {
       const userData = await authService.login(email, password);
+      console.log(userData);
       setIsLoggedIn(true);
+      setUser(userData);
       toast({
-        title: 'Login successful',
+        title: `Welcome, ${userData.name}!`,
         status: 'success',
         duration: 3000,
         isClosable: true,

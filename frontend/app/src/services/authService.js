@@ -7,9 +7,9 @@ const authService = {
     try {
       const response = await axios.post(`${API_URL}/auth/login`, { email, password });
       if (response.data.token) {
-        localStorage.setItem('user', JSON.stringify(response.data));
+        localStorage.setItem('user', JSON.stringify(response.data.user));
       }
-      return response.data;
+      return response.data.user;
     } catch (error) {
       throw error.response.data;
     }

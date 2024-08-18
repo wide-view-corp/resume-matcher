@@ -30,7 +30,7 @@ const NavItem = ({ to, icon: Icon, children, isCollapsed }) => {
   );
 };
 
-const Layout = ({ children }) => {
+const Layout = ({ children, user, setIsLoggedIn, setUser }) => {
   const { isOpen, onToggle } = useDisclosure({ defaultIsOpen: true });
   const bgColor = useColorModeValue('rgba(255,255,255,0.8)', 'rgba(26,32,44,0.8)');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
@@ -66,9 +66,9 @@ const Layout = ({ children }) => {
             <NavItem to="/dataset" icon={FaDatabase} isCollapsed={!isOpen}>Dataset Manager</NavItem>
             <NavItem to="/chatbot" icon={FaRobot} isCollapsed={!isOpen}>Chatbot</NavItem>
           </VStack>
-          <Divider />
+          {/* <Divider /> */}
           <Box mt="auto">
-            <UserProfile isCollapsed={!isOpen} />
+            <UserProfile isCollapsed={!isOpen} user={user} setIsLoggedIn={setIsLoggedIn} setUser={setUser} />
           </Box>
         </VStack>
       </Box>

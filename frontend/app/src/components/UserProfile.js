@@ -1,59 +1,88 @@
 import React from 'react';
-import { Box, Flex, Text, Avatar, Menu, MenuButton, MenuList, MenuItem, IconButton } from '@chakra-ui/react';
-import { FaChevronDown, FaSignOutAlt } from 'react-icons/fa';
+import { Box, Text, Avatar, IconButton, Tooltip, VStack, Divider, useColorModeValue } from '@chakra-ui/react';
+import { FaSignOutAlt } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
+import authService from '../services/authService';
 
-const UserProfile = ({ isCollapsed }) => {
+const getInitials = (name) => {
+  return name
+    .split(' ')
+    .map(word => word[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+};
+
+const getAvatarColor = (name) => {
+  const colors = [
+    'teal.400', 'orange.400', 'purple.400', 
+    'pink.400', 'blue.400', 'green.400'
+  ];
+  const index = name.length % colors.length;
+  return colors[index];
+};
+
+const UserProfile = ({ isCollapsed, user, setIsLoggedIn, setUser }) => {
   const navigate = useNavigate();
-  const userName = "John Doe"; // Replace with actual user name from your auth system
+  const separatorColor = useColorModeValue('gray.300', 'gray.600');
+  const bgColor = useColorModeValue('white', 'gray.800');
 
   const handleLogout = () => {
-    // Implement logout logic here
+    authService.logout();
+    setIsLoggedIn(false);
+    setUser(null);
     navigate('/login');
   };
 
-  if (isCollapsed) {
-    return (
-      <Menu>
-        <MenuButton
-          as={IconButton}
-          icon={<Avatar size="sm" name={userName} />}
-          variant="ghost"
-        />
-        <MenuList>
-          <MenuItem onClick={handleLogout} icon={<FaSignOutAlt />}>
-            Logout
-          </MenuItem>
-        </MenuList>
-      </Menu>
-    );
-  }
+  const initials = getInitials(user.name);
+  const avatarColor = getAvatarColor(user.name);
 
   return (
-    <Box>
-      <Menu>
-        <MenuButton
-          py={2}
-          transition="all 0.3s"
-          _focus={{ boxShadow: 'none' }}
+    <VStack spacing={4} align="center" width="full">
+      <VStack spacing={2}>
+        <Avatar 
+          size="md" 
+          name={user.name} 
+          bg={avatarColor}
+          color="white"
+          fontWeight="bold"
         >
-          <Flex align="center">
-            <Avatar size="sm" name={userName} mr="2" />
-            <Text fontSize="sm" fontWeight="medium">
-              {userName}
-            </Text>
-            <Box ml="2" display="inline-block">
-              <FaChevronDown />
-            </Box>
-          </Flex>
-        </MenuButton>
-        <MenuList>
-          <MenuItem onClick={handleLogout} icon={<FaSignOutAlt />}>
-            Logout
-          </MenuItem>
-        </MenuList>
-      </Menu>
-    </Box>
+          {initials}
+        </Avatar>
+        {!isCollapsed && (
+          <Text fontSize="sm" fontWeight="medium" textAlign="center" isTruncated>
+            {user.name}
+          </Text>
+        )}
+      </VStack>
+      
+      <Box width="full" position="relative" py={2}>
+        <Divider borderColor={separatorColor} />
+        <Box 
+          position="absolute" 
+          top="50%" 
+          left="50%" 
+          transform="translate(-50%, -50%)" 
+          bg={bgColor}
+          px={2}
+        >
+          <Box w={1} h={1} borderRadius="full" bg={separatorColor} />
+        </Box>
+      </Box>
+      
+      <Tooltip label={isCollapsed ? "Logout" : ""} placement="right">
+        <IconButton
+          icon={<FaSignOutAlt />}
+          onClick={handleLogout}
+          aria-label="Logout"
+          size="sm"
+          variant="ghost"
+          width="full"
+        >
+          {!isCollapsed && <Text ml={2}>Logout</Text>}
+        </IconButton>
+      </Tooltip>
+    </VStack>
   );
 };
 

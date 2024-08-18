@@ -39,7 +39,7 @@ app.post('/auth/login', (req, res) => {
   const { email, password } = req.body;
   res.json({
     token: uuidv4(),
-    user: { id: uuidv4(), email }
+    user: { id: uuidv4(), email, name: email }
   });
 });
 
