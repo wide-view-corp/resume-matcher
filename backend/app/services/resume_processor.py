@@ -2,7 +2,7 @@ import io
 import logging
 from PyPDF2 import PdfFileReader
 from sentence_transformers import SentenceTransformer
-import faiss-cpu as faiss
+import faiss
 import numpy as np
 from app.core.config import settings
 from app.dao.dao import ( 
@@ -39,7 +39,7 @@ class ResumeProcessor:
         logger.info("FAISS index saved to database")
 
     # Function to chunk text into smaller pieces
-    def chunk_text(self, text):
+    def chunk_text(text):
         chunk_size = settings.CHUNK_SIZE
         sentences = sent_tokenize(text)
         chunks = []
@@ -54,26 +54,31 @@ class ResumeProcessor:
             else:
                 chunks.append(" ".join(current_chunk))
                 current_chunk = [sentence]
-                current_length = sentence_length
+                current_lengsth = sentence_length
 
         if current_chunk:
             chunks.append(" ".join(current_chunk))
 
         return chunks
 
-    async def process_pdf(self, file_content: bytes):
+    async def extract_text_from_resume(file_content: bytes):
+        # Text converter
+        pdf_reader = PdfFileReader(io.BytesIO(file_content))
+        text = ""
+        for page in range(pdf_reader.getNumPages()):
+            text += pdf_reader.getPage(page).extractText()
+
+        return text 
+
+    async def chunk_and_embed_and_store_resume_to_db(self, file_content: bytes):
         try:
-            # Text converter
-            pdf_reader = PdfFileReader(io.BytesIO(file_content))
-            text = ""
-            for page in range(pdf_reader.getNumPages()):
-                text += pdf_reader.getPage(page).extractText()
+
+            text = extract_text_from_resume(file_content)
+            chunks = self.chunk_text(text)
             
             # Store resume
             resume_id = await store_resume_in_database(file_content, text)
 
-            chunks = self.chunk_text(text)
-            
             for chunk in chunks:
                 embedding = self.model.encode(chunk)
                 self.index.add(np.array([embedding], dtype=np.float32))
