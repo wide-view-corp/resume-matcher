@@ -1,5 +1,3 @@
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.future import select
 from app.models.resume import Resume
 from app.models.chunks import Chunks
 from app.models.index import IndexData

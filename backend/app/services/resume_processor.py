@@ -2,7 +2,7 @@ import io
 import logging
 from PyPDF2 import PdfFileReader
 from sentence_transformers import SentenceTransformer
-import faiss
+import faiss-cpu as faiss
 import numpy as np
 from app.core.config import settings
 from app.dao.dao import ( 
