@@ -20,7 +20,7 @@ async def store_chunk_in_database(chunk: str, embedding_id: int, embedding: np.n
         session.add(chunk)
         await session.commit()
 
-async def get_relevant_context(indices: list[int]) -> list[str]:
+async def get_relevant_context(indices: list[int]):
     """Retrieves resumes of relevant chunks based on indices."""
     async with AsyncSessionLocal() as session:
         result = await session.execute(
@@ -31,10 +31,7 @@ async def get_relevant_context(indices: list[int]) -> list[str]:
         )
         resumes = result.all()
         
-    # Combine the results into the desired format: id followed by text, separated by "\n"
-    relevant_texts = "\n\n".join(f"{resume.id}\n{resume.text}" for resume in resumes)
-
-    return relevant_texts
+    return resumes
 
 async def save_index_to_database(index_data: bytes):
     """Saves the FAISS index data to the database."""
