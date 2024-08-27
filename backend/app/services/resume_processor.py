@@ -1,47 +1,72 @@
 import io
 import logging
-from PyPDF2 import PdfFileReader
+from PyPDF2 import PdfReader
 from sentence_transformers import SentenceTransformer
 import faiss
 import numpy as np
 from app.core.config import settings
-from app.dao.dao import ( 
-    store_resume_in_database, 
-    store_chunk_in_database, 
-    get_relevant_context, 
-    save_index_to_database, 
-    load_index_from_database
-)
-from nltk import sent_tokenize
+from app.dao.dao import store_resume_in_database, store_chunk_in_database, get_relevant_context
+
+from app.services.index_manager import load_or_create_index, save_index
+import nltk
+import asyncio
 
 logger = logging.getLogger(__name__)
 
 class ResumeProcessor:
     def __init__(self):
-        self.model = SentenceTransformer('paraphrase-MiniLM-L6-v2')
-        self.index = self.load_or_create_index()
+        self.index = load_or_create_index()
+        self.model = SentenceTransformer(settings.EMBEDDING_MODEL_NAME)
+  
+    async def encode_and_store_chunks(self, chunks: list, resume_id: int):
+        for chunk in chunks:
+            embedding = self.model.encode(chunk)
+            self.index.add(np.array([embedding], dtype=np.float32))
+            embedding_id = self.index.ntotal - 1
+            await store_chunk_in_database(chunk, embedding_id, resume_id)
+    
+        # Save the updated index to the database
+        await save_index(self.index)
 
-    def load_or_create_index(self):
-        # Attempt to load the index from the database
-        index_data = load_index_from_database()
-        if index_data:
-            index = faiss.deserialize_index(np.frombuffer(index_data, dtype=np.uint8))
-            logger.info("Index loaded from database")
-        else:
-            index = faiss.IndexFlatL2(settings.VECTOR_DIMENSION)
-            logger.info("New FAISS index created")
-        return index
+    async def chunk_and_embed_and_store_resume_to_db(self, file_content: bytes, file_name: str):
+        try:
+            text = extract_text_from_resume(file_content)
+            chunks = chunk_text(text)
+            
+            # Store resume
+            resume_id = await store_resume_in_database(file_name, file_content, text)
 
-    def save_index(self):
-        # Serialize the index and store it in the database
-        index_data = faiss.serialize_index(self.index).tobytes()
-        save_index_to_database(index_data)
-        logger.info("FAISS index saved to database")
+            await self.encode_and_store_chunks(chunks, resume_id)
+            
+            logger.info("Resume chunked, embedded, and added to the index and database")
+            return True
+        except Exception as e:
+            logger.error(f"Error processing resume: {str(e)}")
+            return False
 
-    # Function to chunk text into smaller pieces
-    def chunk_text(text):
+
+    async def get_relevant_context(self, query: str, k: int = 10):
+        query_embedding = self.model.encode([query])
+        _, indices = self.index.search(query_embedding, k)
+        
+        resumes = await get_relevant_context(indices)
+        # Combine the results into the desired format: id followed by text, separated by "\n"
+        relevant_texts = "\n\n".join(f"{resume.name}\n{resume.text}" for resume in resumes)
+        return " ".join(relevant_texts)
+
+def extract_text_from_resume(file_content: bytes):
+        # Text converter
+        pdf_reader = PdfReader(io.BytesIO(file_content))
+        text = ""
+        for page in range(len(pdf_reader.pages)):
+            text += pdf_reader.pages[page].extract_text()
+
+        return text 
+
+def chunk_text(text):
         chunk_size = settings.CHUNK_SIZE
-        sentences = sent_tokenize(text)
+        nltk.download('punkt_tab')
+        sentences = nltk.sent_tokenize(text)
         chunks = []
         current_chunk = []
         current_length = 0
@@ -54,52 +79,13 @@ class ResumeProcessor:
             else:
                 chunks.append(" ".join(current_chunk))
                 current_chunk = [sentence]
-                current_lengsth = sentence_length
+                current_length = sentence_length
 
         if current_chunk:
             chunks.append(" ".join(current_chunk))
 
         return chunks
 
-    async def extract_text_from_resume(file_content: bytes):
-        # Text converter
-        pdf_reader = PdfFileReader(io.BytesIO(file_content))
-        text = ""
-        for page in range(pdf_reader.getNumPages()):
-            text += pdf_reader.getPage(page).extractText()
-
-        return text 
-
-    async def chunk_and_embed_and_store_resume_to_db(self, file_content: bytes):
-        try:
-
-            text = extract_text_from_resume(file_content)
-            chunks = self.chunk_text(text)
-            
-            # Store resume
-            resume_id = await store_resume_in_database(file_content, text)
-
-            for chunk in chunks:
-                embedding = self.model.encode(chunk)
-                self.index.add(np.array([embedding], dtype=np.float32))
-                embedding_id = self.index.ntotal - 1
-                await store_chunk_in_database(chunk, embedding_id, embedding.tobytes(), resume_id)
-    
-            # Save the updated index to the database
-            self.save_index()
-            
-            logger.info("Resume processed and added to the index and database")
-            return True
-        except Exception as e:
-            logger.error(f"Error processing resume: {str(e)}")
-            return False
-
-    async def get_relevant_context(self, query: str, k: int = 10):
-        query_embedding = self.model.encode([query])
-        _, indices = self.index.search(query_embedding, k)
-        
-        relevant_texts = await get_relevant_context(indices)
-
-        return " ".join(relevant_texts)
-
-resume_processor = ResumeProcessor()
+if __name__ == "__main__":
+    resume_processor = ResumeProcessor()
+    logger.info("ResumeProcessor initialized")

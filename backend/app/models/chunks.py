@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, LargeBinary
+from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
 from app.dao.database import Base
 
@@ -8,7 +8,6 @@ class Chunks(Base):
     id = Column(Integer, primary_key=True, index=True)
     content = Column(String)
     embedding_id = Column(Integer)
-    embedding = Column(LargeBinary)
     
     # ForeignKey setup
     resume_id = Column(Integer, ForeignKey("resumes.id"))

@@ -37,7 +37,7 @@ class LLM:
         try:
             if use_rag:
                 context = await resume_processor.get_relevant_context(prompt)
-                prompt = f"Consider the following resumes with their IDs as context:\n\n{context}\n\n You are a recruitment assistant. " \
+                prompt = f"Consider the following resumes with their names as context:\n\n{context}\n\n You are a recruitment assistant. " \
                          "Your task is to analyze these resumes and compare them with the given job description. " \
                          "Based on this analysis, suggest the resumes that best match the job description and provide a clear explanation for your choices. " \
                          "If multiple resumes are equally suitable, mention this. " \
