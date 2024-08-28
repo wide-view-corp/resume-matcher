@@ -3,6 +3,8 @@ from app.models.chunks import Chunks
 from app.models.index import IndexData
 from app.dao.database import AsyncSessionLocal
 from sqlalchemy.future import select
+from sqlalchemy.orm import joinedload
+from sqlalchemy import delete
 from app.dao.database import Base
 from sqlalchemy import text
 import numpy as np
@@ -50,6 +52,46 @@ async def load_index_from_database() -> bytes:
         result = await session.execute(select(IndexData.data).order_by(IndexData.id.desc()).limit(1))
         index_data = result.scalar_one_or_none()
     return index_data
+
+
+async def delete_resume_from_database(resume_name: str):
+    async with AsyncSessionLocal() as session:
+        async with session.begin():
+            try:
+                # Fetch the resume with the given name and its associated chunks
+                result = await session.execute(
+                    select(Resume).options(joinedload(Resume.chunks)).where(Resume.name == resume_name)
+                )
+                resume = result.scalars().first()
+
+                if resume:
+                    # Extract embedding IDs from the associated chunks
+                    embedding_ids = [chunk.embedding_id for chunk in resume.chunks]
+
+                    # Delete associated chunks first
+                    await session.execute(
+                        delete(Chunks).where(Chunks.resume_id == resume.id)
+                    )
+
+                    # Delete the resume itself
+                    await session.execute(
+                        delete(Resume).where(Resume.id == resume.id)
+                    )
+
+                    # Commit the transaction
+                    await session.commit()
+
+                    # Return the list of embedding IDs
+                    return embedding_ids
+
+                else:
+                    # If no resume is found, return an empty list
+                    return []
+
+            except Exception as e:
+                # Rollback in case of error
+                await session.rollback()
+                raise e  # Re-raise the exception after rollback for further handling or logging
 
 async def delete_all():
     async with AsyncSessionLocal() as session:

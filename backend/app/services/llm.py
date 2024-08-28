@@ -2,7 +2,9 @@ import logging
 from transformers import AutoTokenizer, AutoModelForCausalLM
 import torch
 from app.core.config import settings
-from app.services.resume_processor import resume_processor
+from app.services.resume_processor import ResumeProcessor
+from huggingface_hub import login
+login(token='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')
 
 logger = logging.getLogger(__name__)
 
@@ -33,10 +35,15 @@ class LLM:
             # Decode tokens back to string
             self.conversation_history = self.tokenizer.decode(trimmed_tokens, skip_special_tokens=True)
 
-    async def generate_response(self, prompt: str, max_length: int = settings.MAX_LENGTH, use_rag: bool = False) -> str:
+    async def generate_response(self, prompt: str, max_length: int = settings.MAX_LENGTH, use_rag: bool = False, resume_processor: ResumeProcessor = None) -> str:
+        
+        '''if resume_processor is None:
+            # Handle the case where no resume_processor instance is provided
+            #raise ValueError("ResumeProcessor instance must be provided")'''
+
         try:
             if use_rag:
-                context = await resume_processor.get_relevant_context(prompt)
+                context = await ResumeProcessor.get_relevant_context(prompt)
                 prompt = f"Consider the following resumes with their names as context:\n\n{context}\n\n You are a recruitment assistant. " \
                          "Your task is to analyze these resumes and compare them with the given job description. " \
                          "Based on this analysis, suggest the resumes that best match the job description and provide a clear explanation for your choices. " \
@@ -72,5 +79,6 @@ class LLM:
         except Exception as e:
             logger.error(f"Error generating response: {str(e)}")
             raise
-    
-llm = LLM()
+
+if __name__ == "__main__":    
+    llm = LLM()

@@ -5,7 +5,7 @@ from app.core.config import settings
 from app.core.logging import setup_logging
 from app.dao.database import init_db
 from app.services.resume_processor import ResumeProcessor
-from app.services.llm import llm 
+from app.services.llm import LLM
 import logging
 
 setup_logging()
@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 
 # Initialize ResumeProcessor instance
 resume_processor = ResumeProcessor()
+llm = LLM()
 
 app = FastAPI(title=settings.APP_NAME)
 

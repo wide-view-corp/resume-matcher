@@ -53,6 +53,13 @@ class ResumeProcessor:
         # Combine the results into the desired format: id followed by text, separated by "\n"
         relevant_texts = "\n\n".join(f"{resume.name}\n{resume.text}" for resume in resumes)
         return " ".join(relevant_texts)
+    
+    async def delete_elements_from_index(self, id_list):
+        # Ensure the input list is converted to a NumPy array of int64, which is required by FAISS
+        ids_to_remove = np.array(id_list, dtype='int64')
+        
+        # Use FAISS remove_ids method to delete the vectors by their IDs
+        self.index.remove_ids(ids_to_remove)
 
 def extract_text_from_resume(file_content: bytes):
         # Text converter
