@@ -1,0 +1,10 @@
+fastapi==0.68.0
+pydantic_settings
+sqlalchemy==2.0.32
+torch==2.4.0
+PyPDF2==3.0.1
+sentence-transformers==2.1.0
+faiss-cpu==1.7.4
+nltk
+schedule
+pytest==6.2.5
