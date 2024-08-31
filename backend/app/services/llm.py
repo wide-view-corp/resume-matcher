@@ -35,15 +35,10 @@ class LLM:
             # Decode tokens back to string
             self.conversation_history = self.tokenizer.decode(trimmed_tokens, skip_special_tokens=True)
 
-    async def generate_response(self, prompt: str, max_length: int = settings.MAX_LENGTH, use_rag: bool = False, resume_processor: ResumeProcessor = None) -> str:
-        
-        '''if resume_processor is None:
-            # Handle the case where no resume_processor instance is provided
-            #raise ValueError("ResumeProcessor instance must be provided")'''
-
+    async def generate_response(self, prompt: str, max_length: int = settings.MAX_LENGTH, use_rag: bool = False, context: str = None) -> str:
         try:
-            if use_rag:
-                context = await ResumeProcessor.get_relevant_context(prompt)
+            if use_rag and context:
+                # context = await ResumeProcessor.get_relevant_context(prompt)
                 prompt = f"Consider the following resumes with their names as context:\n\n{context}\n\n You are a recruitment assistant. " \
                          "Your task is to analyze these resumes and compare them with the given job description. " \
                          "Based on this analysis, suggest the resumes that best match the job description and provide a clear explanation for your choices. " \
@@ -80,5 +75,21 @@ class LLM:
             logger.error(f"Error generating response: {str(e)}")
             raise
 
+
+    def get_conversation_history(self):
+        # Split the conversation history into a list of messages
+        messages = self.conversation_history.strip().split('\n\n')
+        
+        # Convert the messages into a list of dictionaries
+        history = []
+        for i in range(0, len(messages), 2):
+            if i + 1 < len(messages):
+                history.append({
+                    "user": messages[i].replace("User: ", ""),
+                    "assistant": messages[i + 1].replace("Assistant: ", "")
+                })
+        
+        return history
+    
 if __name__ == "__main__":    
     llm = LLM()

@@ -1,4 +1,5 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException
+from dependency_injector.wiring import inject, Provide
 import logging
 from app.dao.dao import delete_resume_from_database
 
@@ -6,11 +7,9 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-# This will be set in the main file
-resume_processor = None
-
 @router.post("/documents")
-async def upload_resume(file: UploadFile = File(...)):
+@inject
+async def upload_resume(file: UploadFile = File(...),resume_processor: ResumeProcessor = Depends(Provide[Container.resume_processor])):
     if file.content_type != "application/pdf":
         raise HTTPException(status_code=400, detail="Only PDF files are allowed")
     
@@ -23,13 +22,15 @@ async def upload_resume(file: UploadFile = File(...)):
     
 
 @router.get("/documents")
-async def get_all_resumes():
+@inject
+async def get_all_resumes(resume_processor: ResumeProcessor = Depends(Provide[Container.resume_processor])):
     resumes = await resume_processor.get_all_resumes()
     return resumes
 
 
 @router.delete("/documents/{file_name}")
-async def delete_resume(file_name: str):
+@inject
+async def delete_resume(file_name: str,resume_processor: ResumeProcessor = Depends(Provide[Container.resume_processor])):
     try:
         # Delete resume from database and get list of FAISS indices to remove
         index_list = await delete_resume_from_database(file_name)

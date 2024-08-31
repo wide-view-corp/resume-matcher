@@ -4,37 +4,38 @@ from app.api.resume_endpoints import router as resume_router
 from app.core.config import settings
 from app.core.logging import setup_logging
 from app.dao.database import init_db
-from app.services.resume_processor import ResumeProcessor
-from app.services.llm import LLM
+from dependency_injector.wiring import inject, Provide
+from app.containers import Container
+
 import logging
 
 setup_logging()
 logger = logging.getLogger(__name__)
 
 
-# Initialize ResumeProcessor instance
-resume_processor = ResumeProcessor()
-llm = LLM()
+def create_app() -> FastAPI:
+    container = Container()
+    container.wire(modules=[
+        "app.api.chat_endpoint",
+        "app.api.resume_endpoints"
+    ])
 
-app = FastAPI(title=settings.APP_NAME)
+    app = FastAPI(title=settings.APP_NAME)
+    app.container = container
+    app.include_router(chat_router, prefix="/chatbot", tags=["chatbot"])
+    app.include_router(resume_router, prefix="/resume", tags=["resume"])
 
-app.include_router(chat_router)
-app.include_router(resume_router, prefix="/resume", tags=["resume"])
+    return app
 
-
-# Pass the resume_processor instance to the router
-resume_router.resume_processor = resume_processor
+app = create_app()
 
 @app.on_event("startup")
 async def startup_event():
     #asyncio.create_task(start_faiss_optimizer())
     await init_db()
     # Ensure that the index is correctly initialized by awaiting the index setup
-    resume_processor.index = await resume_processor.index
+    # resume_processor.index = await resume_processor.index
 
 @app.on_event("shutdown")
 async def shutdown_event():
-    # Clean the conversation history
-    llm.conversation_history = ""
     logger.info("Conversation history cleared on shutdown.")
-    pass
