@@ -1,7 +1,9 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
 from dependency_injector.wiring import inject, Provide
 import logging
 from app.dao.dao import delete_resume_from_database
+from app.containers import Container
+from app.services.resume_processor import ResumeProcessor
 
 logger = logging.getLogger(__name__)
 

@@ -3,6 +3,7 @@ from dependency_injector.wiring import inject, Provide
 from pydantic import BaseModel
 from typing import List, Dict
 import logging
+from app.containers import Container
 from app.services.llm import LLM
 from app.services.resume_processor import ResumeProcessor
 
