@@ -1,0 +1,25 @@
+{
+	"name": "FastAPI Development",
+	"dockerFile": "Dockerfile",
+	"context": "..",
+	"remoteUser": "root",
+	"forwardPorts": [8000],
+	"postCreateCommand": "pip install --user -r requirements.txt",
+	"extensions": [
+		"ms-python.python",
+		"ms-python.vscode-pylance",
+		"davidanson.vscode-markdownlint",
+		"streetsidesoftware.code-spell-checker"
+	],
+	"settings": {
+		"terminal.integrated.shell.linux": "/bin/bash",
+		"python.pythonPath": "/usr/local/bin/python",
+		"python.linting.enabled": true,
+		"python.linting.pylintEnabled": true,
+		"python.formatting.provider": "black",
+		"editor.formatOnSave": true,
+		"editor.codeActionsOnSave": {
+			"source.organizeImports": true
+		}
+	}
+}

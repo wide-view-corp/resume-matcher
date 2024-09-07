@@ -1,3 +1,6 @@
+import datetime
+import os
+import uuid
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
 from dependency_injector.wiring import inject, Provide
 import logging
@@ -8,19 +11,34 @@ from app.services.resume_processor import ResumeProcessor
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
-
 @router.post("/documents")
 @inject
-async def upload_resume(file: UploadFile = File(...),resume_processor: ResumeProcessor = Depends(Provide[Container.resume_processor])):
+async def upload_resume(
+    file: UploadFile = File(...),
+    resume_processor: ResumeProcessor = Depends(Provide[Container.resume_processor])
+):
     if file.content_type != "application/pdf":
         raise HTTPException(status_code=400, detail="Only PDF files are allowed")
     
-    content = await file.read()
-    file_name = file.name
-    if await resume_processor.chunk_and_embed_and_store_resume_to_db(content, file_name):
-        return {"message": "Resume processed successfully"}
-    else:
-        raise HTTPException(status_code=500, detail="Failed to process the resume")
+    try:
+        await resume_processor.initialize()
+        filename = file.filename
+
+        content = await file.read()
+
+        success = await resume_processor.chunk_and_embed_and_store_resume_to_db(content, filename)
+
+        if success:
+            return {
+                "message": "Resume processed successfully",
+                "original_filename": filename
+            }
+        else:
+            raise HTTPException(status_code=500, detail="Failed to process the resume")
+
+    except Exception as e:
+        logger.error(f"Error processing resume upload: {str(e)}")
+        raise HTTPException(status_code=500, detail="An error occurred while processing the resume")
     
 
 @router.get("/documents")

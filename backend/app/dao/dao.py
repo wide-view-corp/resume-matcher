@@ -17,6 +17,9 @@ async def store_resume_in_database(file_name: str, content: bytes, text: str):
         await session.commit()
         await session.refresh(resume)
         return resume.id
+    
+async def get_all_resumes_from_database():
+        return Resume.query.all()
 
 async def store_chunk_in_database(chunk: str, embedding_id: int, resume_id: int):
     """Stores resume's chunk and its embedding_id in the database."""
