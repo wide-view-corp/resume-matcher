@@ -44,8 +44,12 @@ async def upload_resume(
 @router.get("/documents")
 @inject
 async def get_all_resumes(resume_processor: ResumeProcessor = Depends(Provide[Container.resume_processor])):
-    resumes = await resume_processor.get_all_resumes()
-    return resumes
+    try:
+        resumes = await resume_processor.get_all_resumes()
+        return resumes
+    except Exception as e:
+        logger.error(f"Error retrieving resumes: {str(e)}")
+        raise HTTPException(status_code=500, detail="An error occurred while retrieving resumes")
 
 
 @router.delete("/documents/{file_name}")

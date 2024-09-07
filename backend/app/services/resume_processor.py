@@ -5,7 +5,7 @@ from sentence_transformers import SentenceTransformer
 import faiss
 import numpy as np
 from app.core.config import settings
-from app.dao.dao import store_resume_in_database, store_chunk_in_database, get_relevant_context
+from app.dao.dao import get_all_resumes_from_database, store_resume_in_database, store_chunk_in_database, get_relevant_context
 from app.services.index_manager import load_or_create_index, save_index
 import nltk
 import asyncio
@@ -40,6 +40,15 @@ class ResumeProcessor:
             await store_chunk_in_database(chunk, embedding_id, resume_id)
         await save_index(self.index)
 
+    async def get_all_resumes(self):
+        try:
+            resumes=await get_all_resumes_from_database()
+            logger.log(logging.INFO,resumes)
+            return [{"id": str(id), "name": name } for id, name in resumes]
+        except Exception as e:
+            logger.error(f"Error geting resumes : {str(e)}")
+            return []
+        
     async def chunk_and_embed_and_store_resume_to_db(self, content: bytes, filename: str):
         try:
             if self.index is None:

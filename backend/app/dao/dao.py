@@ -19,7 +19,13 @@ async def store_resume_in_database(file_name: str, content: bytes, text: str):
         return resume.id
     
 async def get_all_resumes_from_database():
-        return Resume.query.all()
+    """Retrieves all resumes from the database."""
+    async with AsyncSessionLocal() as session:
+        stmt = select(Resume.id, Resume.name)
+        result = await session.execute(stmt)
+        resumes = result.all()
+        # [{"id": id, "name": stored_name} for id, original_name, stored_name in resumes]
+    return resumes
 
 async def store_chunk_in_database(chunk: str, embedding_id: int, resume_id: int):
     """Stores resume's chunk and its embedding_id in the database."""
