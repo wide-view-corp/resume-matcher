@@ -5,7 +5,7 @@ const API_URL = 'http://localhost:3300'; // Adjust this URL as needed
 const datasetService = {
   getDocuments: async () => {
     try {
-      const response = await axios.get(`${API_URL}/documents`);
+      const response = await axios.get(`${API_URL}/resumes`);
       return response.data;
     } catch (error) {
       console.error('Error fetching documents:', error);
@@ -15,7 +15,7 @@ const datasetService = {
 
   uploadDocument: async (formData) => {
     try {
-      const response = await axios.post(`${API_URL}/documents/upload`, formData, {
+      const response = await axios.post(`${API_URL}/resumes`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -29,7 +29,7 @@ const datasetService = {
 
   deleteDocument: async (id) => {
     try {
-      await axios.delete(`${API_URL}/documents/${id}`);
+      await axios.delete(`${API_URL}/resumes/${id}`);
     } catch (error) {
       console.error('Error deleting document:', error);
       throw error;
@@ -38,7 +38,7 @@ const datasetService = {
 
   getDocumentContent: async (id) => {
     try {
-      const response = await axios.get(`${API_URL}/documents/${id}/content`, {
+      const response = await axios.get(`${API_URL}/resumes/${id}/content`, {
         responseType: 'blob',
       });
       return URL.createObjectURL(response.data);

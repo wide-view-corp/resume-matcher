@@ -24,7 +24,6 @@ async def get_all_resumes_from_database():
         stmt = select(Resume.id, Resume.name)
         result = await session.execute(stmt)
         resumes = result.all()
-        # [{"id": id, "name": stored_name} for id, original_name, stored_name in resumes]
     return resumes
 
 async def store_chunk_in_database(chunk: str, embedding_id: int, resume_id: int):

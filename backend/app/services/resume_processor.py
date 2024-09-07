@@ -43,10 +43,9 @@ class ResumeProcessor:
     async def get_all_resumes(self):
         try:
             resumes=await get_all_resumes_from_database()
-            logger.log(logging.INFO,resumes)
             return [{"id": str(id), "name": name } for id, name in resumes]
         except Exception as e:
-            logger.error(f"Error geting resumes : {str(e)}")
+            logger.error(f"Error getting resumes : {str(e)}")
             return []
         
     async def chunk_and_embed_and_store_resume_to_db(self, content: bytes, filename: str):

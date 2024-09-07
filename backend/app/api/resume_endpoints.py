@@ -11,7 +11,7 @@ from app.services.resume_processor import ResumeProcessor
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
-@router.post("/documents")
+@router.post("/")
 @inject
 async def upload_resume(
     file: UploadFile = File(...),
@@ -41,7 +41,7 @@ async def upload_resume(
         raise HTTPException(status_code=500, detail="An error occurred while processing the resume")
     
 
-@router.get("/documents")
+@router.get("/")
 @inject
 async def get_all_resumes(resume_processor: ResumeProcessor = Depends(Provide[Container.resume_processor])):
     try:
@@ -52,7 +52,7 @@ async def get_all_resumes(resume_processor: ResumeProcessor = Depends(Provide[Co
         raise HTTPException(status_code=500, detail="An error occurred while retrieving resumes")
 
 
-@router.delete("/documents/{file_name}")
+@router.delete("/{id}")
 @inject
 async def delete_resume(file_name: str,resume_processor: ResumeProcessor = Depends(Provide[Container.resume_processor])):
     try:
