@@ -1,4 +1,5 @@
 import os
+from app.services.llm import get_llm_instance
 from fastapi import FastAPI
 from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.openapi.utils import get_openapi
@@ -59,6 +60,8 @@ app = create_app()
 async def startup_event():
     #asyncio.create_task(start_faiss_optimizer())
     await init_db()
+    # Pre-warm the LLM
+    get_llm_instance()
     # Ensure that the index is correctly initialized by awaiting the index setup
     # resume_processor.index = await resume_processor.index
 

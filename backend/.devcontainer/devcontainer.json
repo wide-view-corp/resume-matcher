@@ -1,25 +1,38 @@
 {
-	"name": "FastAPI Development",
-	"dockerFile": "Dockerfile",
-	"context": "..",
-	"remoteUser": "root",
-	"forwardPorts": [8000],
-	"postCreateCommand": "pip install --user -r requirements.txt",
-	"extensions": [
-		"ms-python.python",
-		"ms-python.vscode-pylance",
-		"davidanson.vscode-markdownlint",
-		"streetsidesoftware.code-spell-checker"
-	],
-	"settings": {
-		"terminal.integrated.shell.linux": "/bin/bash",
-		"python.pythonPath": "/usr/local/bin/python",
-		"python.linting.enabled": true,
-		"python.linting.pylintEnabled": true,
-		"python.formatting.provider": "black",
-		"editor.formatOnSave": true,
-		"editor.codeActionsOnSave": {
-			"source.organizeImports": true
-		}
-	}
+    "name": "FastAPI LLM Development",
+    "dockerComposeFile": "../docker-compose.yml",
+    "service": "app",
+    "workspaceFolder": "/app",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-python.python",
+                "ms-python.vscode-pylance",
+                "ms-azuretools.vscode-docker",
+                "davidanson.vscode-markdownlint",
+		        "streetsidesoftware.code-spell-checker"
+            ],
+            "settings": {
+                "terminal.integrated.shell.linux": "/bin/bash",
+                "python.pythonPath": "/usr/local/bin/python",                
+                "python.defaultInterpreterPath": "/usr/local/bin/python",
+                "python.linting.enabled": true,
+                "python.linting.pylintEnabled": true,
+                "python.formatting.provider": "black",
+                "editor.formatOnSave": true,
+                "editor.codeActionsOnSave": {
+                    "source.organizeImports": true
+                }
+            }
+        }
+    },
+    "forwardPorts": [8000, 8001, 8002, 8080],
+    "postCreateCommand": "pip install -r requirements.txt",
+    "remoteUser": "root",
+    "build": {
+        "args": {
+            "VARIANT": "3.9"
+        }
+    },
+    "runArgs": ["--platform=linux/amd64"]
 }

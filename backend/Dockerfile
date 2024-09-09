@@ -1,15 +1,18 @@
 # Use the base image from your current Dockerfile
-FROM python:3.9
+FROM python:3.9-slim
 
 # Set working directory
 WORKDIR /app
 
 # Install system dependencies
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends\
     build-essential \
     curl \
     software-properties-common \
     git \
+    libpoppler-cpp-dev \
+    pkg-config \
+    sqlite3 \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
