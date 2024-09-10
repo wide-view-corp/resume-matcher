@@ -31,8 +31,7 @@ class ResumeProcessor:
             logger.info("NLTK punkt tokenizer downloaded successfully.")
 
     async def encode_and_store_chunks(self, chunks: list, resume_id: int):
-        if self.index is None:
-            await self.initialize()
+        await self.ensure_index()
         for chunk in chunks:
             embedding = self.model.encode(chunk)
             self.index.add(np.array([embedding], dtype=np.float32))
@@ -42,16 +41,15 @@ class ResumeProcessor:
 
     async def get_all_resumes(self):
         try:
-            resumes=await get_all_resumes_from_database()
-            return [{"id": str(id), "name": name } for id, name in resumes]
+            resumes = await get_all_resumes_from_database()
+            return [{"id": str(id), "name": name} for id, name in resumes]
         except Exception as e:
-            logger.error(f"Error getting resumes : {str(e)}")
+            logger.error(f"Error getting resumes: {str(e)}")
             return []
         
     async def chunk_and_embed_and_store_resume_to_db(self, content: bytes, filename: str):
         try:
-            if self.index is None:
-                await self.initialize()
+            await self.ensure_index()
             text = self.extract_text_from_resume(content)
             chunks = self.chunk_text(text)
             
@@ -59,7 +57,7 @@ class ResumeProcessor:
 
             await self.encode_and_store_chunks(chunks, resume_id)
             
-            logger.info(f"Resume {filename} (originally {filename}) processed and stored successfully")
+            logger.info(f"Resume {filename} processed and stored successfully")
             return True
         except Exception as e:
             logger.error(f"Error processing resume {filename}: {str(e)}")
@@ -94,14 +92,20 @@ class ResumeProcessor:
 
         return chunks
 
+    async def ensure_index(self):
+        if self.index is None:
+            await self.initialize()
+
     async def get_relevant_context(self, query: str, k: int = 10):
+        await self.ensure_index()
         query_embedding = self.model.encode([query])
         _, indices = self.index.search(query_embedding, k)
         
-        resumes = await get_relevant_context(indices)
+        resumes = await get_relevant_context(indices[0])
         relevant_texts = "\n\n".join(f"{resume.name}\n{resume.text}" for resume in resumes)
-        return " ".join(relevant_texts)
+        return relevant_texts
     
     async def delete_elements_from_index(self, id_list):
+        await self.ensure_index()
         ids_to_remove = np.array(id_list, dtype='int64')
         self.index.remove_ids(ids_to_remove)

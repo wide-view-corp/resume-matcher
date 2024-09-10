@@ -1,8 +1,6 @@
+from ctransformers import AutoModelForCausalLM
 import logging
-from tritonclient.http import InferenceServerClient, InferInput, InferRequestedOutput
-import numpy as np
 from app.core.config import settings
-from transformers import AutoTokenizer
 
 logger = logging.getLogger(__name__)
 
@@ -17,21 +15,20 @@ class LLM:
 
     def initialize(self):
         logger.info(f"Initializing LLM client for model: {settings.MODEL_NAME}")
-        self.tokenizer = AutoTokenizer.from_pretrained(settings.MODEL_NAME)
-        self.triton_client = InferenceServerClient(url="localhost:8000")
+        self.model = AutoModelForCausalLM.from_pretrained(
+            settings.MODEL_NAME,
+            model_type="llama",
+            max_new_tokens=settings.MAX_LENGTH,
+            context_length=settings.CONTEXT_LENGTH,
+            gpu_layers=0
+        )
         self.conversation_history = ""
 
     def _trim_conversation_history(self):
-        """Trim conversation history to ensure it does not exceed CONTEXT_LENGTH."""
-        # Tokenize the current conversation history
-        history_tokens = self.tokenizer(self.conversation_history, return_tensors="pt").input_ids[0]
-        
-        # If the token length exceeds the context limit, truncate it
-        if len(history_tokens) > settings.CONTEXT_LENGTH:
-            # Keep only the last CONTEXT_LENGTH tokens
-            trimmed_tokens = history_tokens[-settings.CONTEXT_LENGTH:]
-            # Decode tokens back to string
-            self.conversation_history = self.tokenizer.decode(trimmed_tokens, skip_special_tokens=True)
+        tokens = self.model.tokenize(self.conversation_history)
+        if len(tokens) > settings.CONTEXT_LENGTH:
+            trimmed_tokens = tokens[-settings.CONTEXT_LENGTH:]
+            self.conversation_history = self.model.detokenize(trimmed_tokens)
 
     async def generate_response(self, prompt: str, max_length: int = settings.MAX_LENGTH, use_rag: bool = False, context: str = None) -> str:
         try:
@@ -46,30 +43,17 @@ class LLM:
             self.conversation_history += f"\n\nUser: {prompt}\n\nAssistant: "
             self._trim_conversation_history()
 
-            input_ids = self.tokenizer.encode(self.conversation_history, return_tensors="np")
+            response = self.model(self.conversation_history, max_new_tokens=max_length)
             
-            input_tensor = InferInput("INPUT_0", input_ids.shape, "INT64")
-            input_tensor.set_data_from_numpy(input_ids)
-
-            output = InferRequestedOutput("OUTPUT_0")
-            
-            response = self.triton_client.infer("llama", [input_tensor], outputs=[output], client_timeout=settings.TRITON_TIMEOUT)
-            
-            output_ids = response.as_numpy("OUTPUT_0")
-            response_text = self.tokenizer.decode(output_ids[0], skip_special_tokens=True)
-            
-            self.conversation_history += response_text
-            return response_text
+            self.conversation_history += response
+            return response
 
         except Exception as e:
             logger.error(f"Error generating response: {str(e)}")
             raise
 
     def get_conversation_history(self):
-        # Split the conversation history into a list of messages
         messages = self.conversation_history.strip().split('\n\n')
-        
-        # Convert the messages into a list of dictionaries
         history = []
         for i in range(0, len(messages), 2):
             if i + 1 < len(messages):
@@ -77,10 +61,8 @@ class LLM:
                     "user": messages[i].replace("User: ", ""),
                     "assistant": messages[i + 1].replace("Assistant: ", "")
                 })
-        
         return history
-    
-# Initialize the LLM instance at module level
+
 llm_instance = LLM()
 
 def get_llm_instance():

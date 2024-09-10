@@ -1,37 +1,20 @@
 version: '3'
 services:
-  triton:
-    build:
-      context: .
-      dockerfile: Dockerfile.triton
-    ports:
-      - "8000:8000"
-      - "8001:8001"
-      - "8002:8002"
-    volumes:
-      - ./model_repository:/models
-      - ${MOUNT_CACHE:-/tmp}:/root/.cache/huggingface
-    environment:
-      - CONVERT_MODEL=${CONVERT_MODEL:-false}
-    deploy:
-      resources:
-        limits:
-          memory: 15G  # Adjust this based on your available memory
-        reservations:
-          memory: 14G  # Adjust this based on your available memory
-    shm_size: '2gb'
   app:
     build:
       context: .
       dockerfile: Dockerfile
     ports:
       - "8080:8000"
-    depends_on:
-      - triton
-    environment:
-      - TRITON_URL=triton:8000
     volumes:
       - .:/app
+      - ./.cache/huggingface:/root/.cache/huggingface
+    deploy:
+      resources:
+        limits:
+          memory: 8G  # Reduced memory limit
+        reservations:
+          memory: 6G  # Reduced memory reservation
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
 networks:

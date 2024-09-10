@@ -5,7 +5,7 @@ import os
 class Settings(BaseSettings):
     APP_NAME: str = Field("DefaultAppName", env="APP_NAME")
     DEBUG: bool = Field(False, env="DEBUG")
-    MODEL_NAME: str = Field("DefaultModelName", env="MODEL_NAME")
+    MODEL_NAME: str = Field("TheBloke/Llama-2-7B-Chat-GGML", env="MODEL_NAME")
     EMBEDDING_MODEL_NAME: str = Field("paraphrase-MiniLM-L6-v2", env="EMBEDDING_MODEL_NAME")
     MAX_LENGTH: int = Field(1000, env="MAX_LENGTH")
     CONTEXT_LENGTH: int = Field(2000, env="CONTEXT_LENGTH")
