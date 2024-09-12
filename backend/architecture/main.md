@@ -2,27 +2,36 @@ llm_api/
 ├── app/
 │   ├── __init__.py
 │   ├── main.py
+│   ├── containers.py
 │   ├── api/
-│   │   ├── __init__.py
-│   │   ├── endpoints.py
+│   │   ├── chat_endpoints.py
 │   │   └── resume_endpoints.py
-│   │   └── chat_endpoints.py 
 │   ├── core/
-│   │   ├── __init__.py
 │   │   ├── config.py
 │   │   └── logging.py
+│   ├── dao/
+│   │   ├── dao.py
+│   │   └── database.py
+│   ├── database/
+│   │   └── resume_data.db
+│   ├── models/
+│   │   ├── chunks.py
+│   │   ├── index.py
+│   │   └── resume.py
 │   ├── services/
 │   │   ├── __init__.py
 │   │   ├── llm.py
 │   │   └── resume_processor.py
 │   │   └── faiss_optimizer.py
-│   │   └── chatbot.py
+│   │   └── index_manager.py
 │   └── db/
 │       ├── __init__.py
 │       └── database.py
 ├── tests/
-│   ├── test_api.py
-│   └── test_resume_processor.py
+│   ├── __init__.py
+│   ├── cv_test_i
+│   ├── test_function_i.py
+│   └── test-api.py
 ├── .env
 ├── Dockerfile
 ├── docker-compose.yml
