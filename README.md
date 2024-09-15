@@ -1,5 +1,2 @@
 # resume-matcher
-project idea for a resume matching system using natural language processing and vector databases. I'll outline a high-level architecture and implementation plan for this full-stack application, keeping in mind the requirements for modularity, OpenAPI standards, and a user-friendly UI.
-
-Architecture Overview:
-The image shows a high-level architecture split into Frontend and Backend components. I'll expand on this and provide more details for implementation.
+This project is a resume matching system using natural language processing. It is based on the RAG technique and FAISS similarity search. For a given query (such as a job description), the solution functions as a chatbot connected to a dataset manager. When resumes are uploaded, they are first converted to text, chunked, embedded, and stored in a FAISS index. When a prompt is submitted, the resumes are selected through the FAISS index based on the embedded prompt and then fed as context to the model using the RAG technique. You can change the model as desired by modifying the `.env` file. The library used is Transformers from Hugging Face.

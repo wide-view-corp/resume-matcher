@@ -1,4 +1,4 @@
-from ctransformers import AutoModelForCausalLM
+from transformers import AutoModelForCausalLM
 import logging
 from app.core.config import settings
 
